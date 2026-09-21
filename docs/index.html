@@ -8,7 +8,7 @@
   :root { --bd:#d0d7de; --mut:#57606a; --pri:#1f6feb; --bg:#f6f8fa; }
   * { box-sizing:border-box; }
   body { font-family:"Microsoft YaHei",system-ui,sans-serif; margin:0; color:#1f2328; background:var(--bg); }
-  header { background:#24292f; color:#fff; padding:12px 20px; font-size:18px; font-weight:600; }
+  header { background:#24292f; color:#fff; padding:12px 20px; font-size:18px; font-weight:600; display:flex; align-items:center; }
   .wrap { max-width:1280px; margin:16px auto; padding:0 16px; display:grid; grid-template-columns:minmax(560px,1fr) minmax(480px,1fr); gap:16px; align-items:start; }
   @media (max-width:960px){ .wrap{ grid-template-columns:1fr; } }
   fieldset { border:1px solid var(--bd); border-radius:8px; background:#fff; margin:0 0 14px; padding:10px 14px 14px; }
@@ -26,12 +26,33 @@
   .kv { display:flex; gap:24px; align-items:center; background:#fff; border:1px solid var(--bd); border-radius:8px; padding:12px 16px; margin-bottom:12px; }
   .kv .val { font-size:22px; font-weight:700; }
   .pass { color:#1a7f37; } .fail { color:#cf222e; }
-  #jisuanshu { width:100%; height:calc(100vh - 180px); min-height:360px; font-family:Consolas,"Courier New",monospace; font-size:13px; line-height:1.6; padding:14px; border:1px solid var(--bd); border-radius:8px; background:#fff; resize:vertical; }
+  #jisuanshu { width:100%; height:calc(100vh - 180px); min-height:360px; font-family:Consolas,"Courier New",monospace; font-size:13px; line-height:1.6; padding:14px; border:1px solid var(--bd); border-radius:8px; background:#fff; resize:vertical; -webkit-user-select:none; -moz-user-select:none; -ms-user-select:none; user-select:none; }
   .hidden { display:none; }
+  .who { margin-left:auto; font-size:13px; color:#cfe0f5; display:flex; gap:10px; align-items:center; }
+  .who button { padding:3px 10px; font-size:12px; }
+  #auth-mask { position:fixed; inset:0; background:rgba(15,20,30,.55); display:flex; align-items:center; justify-content:center; z-index:50; }
+  .auth-card { background:#fff; border-radius:12px; width:min(400px,92vw); padding:22px 24px; box-shadow:0 12px 40px rgba(0,0,0,.25); }
+  .auth-card h2 { margin:0 0 4px; font-size:19px; }
+  .auth-card .sub { margin:0 0 16px; font-size:12px; color:var(--mut); }
+  .auth-tabs { display:flex; gap:8px; margin-bottom:14px; }
+  .auth-tabs button { flex:1; padding:8px; border:1px solid var(--bd); background:#f6f8fa; border-radius:6px; cursor:pointer; font-size:14px; }
+  .auth-tabs button.on { background:var(--pri); color:#fff; border-color:var(--pri); }
+  .auth-card .row { margin-bottom:10px; }
+  .auth-card .row label { display:block; font-size:12px; color:var(--mut); margin-bottom:3px; }
+  .auth-card .row input { width:100%; padding:8px 10px; border:1px solid var(--bd); border-radius:6px; font-size:14px; }
+  .auth-msg { min-height:18px; font-size:13px; margin:6px 0 12px; }
+  .auth-msg.err { color:#cf222e; } .auth-msg.ok { color:#1a7f37; }
+  .auth-actions { display:flex; flex-direction:column; gap:8px; }
+  .auth-actions .pri { padding:9px; border:none; border-radius:6px; background:var(--pri); color:#fff; font-size:15px; cursor:pointer; }
+  .auth-actions .lnk { background:none; border:none; color:var(--pri); cursor:pointer; font-size:13px; padding:2px; }
+  .auth-guest { margin-top:12px; padding-top:12px; border-top:1px solid var(--bd); text-align:center; }
+  .auth-guest button { width:100%; padding:8px; border:1px solid var(--bd); border-radius:6px; background:#fff; cursor:pointer; font-size:14px; }
 </style>
 </head>
 <body>
-<header>单建地下室整体抗浮计算　<span style="font-size:13px;font-weight:400;opacity:.8">（网页版 · 与桌面版同一算法）</span></header>
+<header>单建地下室整体抗浮计算　<span style="font-size:13px;font-weight:400;opacity:.8">（网页版 · 与桌面版同一算法）</span>
+  <span class="who" id="who"></span>
+</header>
 <div class="wrap">
   <div>
     <fieldset><legend>工程信息</legend>
@@ -58,11 +79,44 @@
   </div>
   <div class="side">
     <div class="kv"><span>抗浮稳定安全系数：<span class="val" id="bizhi"></span></span><span id="jielun"></span></div>
-    <textarea id="jisuanshu" readonly placeholder="计算结果与计算书将显示在此处"></textarea>
+    <textarea id="jisuanshu" readonly tabindex="-1" oncontextmenu="return false" placeholder="计算结果与计算书将显示在此处"></textarea>
   </div>
 </div>
 
+<!-- 登录 / 游客 遮罩层 -->
+<div id="auth-mask" class="hidden">
+  <div class="auth-card">
+    <h2>欢迎使用抗浮计算</h2>
+    <p class="sub">登录后可导出计算书；游客可试用全部计算功能。</p>
+    <div class="auth-tabs">
+      <button id="tab-login" class="on">登录</button>
+      <button id="tab-signup">注册</button>
+    </div>
+    <div id="pane-login">
+      <div class="row"><label>手机号</label><input id="a-phone" type="text" inputmode="numeric" maxlength="11" placeholder="注册时填写的手机号"></div>
+      <div class="row"><label>密码</label><input id="a-pass" type="password" placeholder="登录密码"></div>
+      <div class="auth-msg" id="auth-msg"></div>
+      <div class="auth-actions">
+        <button class="pri" id="btn-do-login">登 录</button>
+        <button class="lnk" id="btn-forgot">忘记密码？（向手机号/邮箱发送重置邮件）</button>
+      </div>
+    </div>
+    <div id="pane-signup" class="hidden">
+      <div class="row"><label>手机号（作为登录用户名）</label><input id="r-phone" type="text" inputmode="numeric" maxlength="11"></div>
+      <div class="row"><label>邮箱（用于找回密码）</label><input id="r-email" type="text" inputmode="email"></div>
+      <div class="row"><label>设置密码（至少 6 位）</label><input id="r-pass" type="password"></div>
+      <div class="auth-msg" id="auth-msg2"></div>
+      <div class="auth-actions">
+        <button class="pri" id="btn-do-signup">注 册</button>
+      </div>
+    </div>
+    <div class="auth-guest"><button id="btn-guest">以游客身份进入（不能导出计算书）</button></div>
+  </div>
+</div>
+
+<script src="config.js"></script>
 <script src="kangfu.js"></script>
+<script src="auth.js"></script>
 <script>
 const $ = id=>document.getElementById(id);
 const ALL_FIELDS = [...OVERALL, ...FOUND, ...F1, ...F2, ...F3];
@@ -123,6 +177,20 @@ function updateFloorVisibility(){
 }
 $('cengshu').addEventListener('change', updateFloorVisibility);
 
+// 计算书展示框：只读、不可选中、不可复制，仅供查看。
+(function guardJisuanshu(){
+  const box = $('jisuanshu');
+  const block = e => { e.preventDefault(); return false; };
+  box.addEventListener('copy', block);
+  box.addEventListener('cut', block);
+  box.addEventListener('select', block);
+  box.addEventListener('mousedown', ()=>{ if(box.selectionStart!==null) box.setSelectionRange(0,0); });
+  box.addEventListener('keydown', e=>{
+    const ctrl = e.ctrlKey || e.metaKey;
+    if (ctrl && ['a','c','x'].includes((e.key||'').toLowerCase())) e.preventDefault();
+  });
+})();
+
 function showResult(bizhi, jielun, jss){
   $('bizhi').textContent = bizhi;
   const jr=$('jielun');
@@ -151,10 +219,15 @@ $('btn-clear').addEventListener('click', ()=>{
 });
 
 $('btn-save').addEventListener('click', ()=>{
+  if(window.KangfuAuth && KangfuAuth.isGuest()){
+    alert('游客不能导出计算书，请先登录或注册。');
+    showAuthMask();
+    return;
+  }
   const txt=$('jisuanshu').value;
   if(!txt){ alert('请先计算，暂无可保存的内容！'); return; }
   const name=$('gongchengmingcheng').value.trim()||'抗浮计算书';
-  const blob=new Blob(['\ufeff'+txt], {type:'text/plain;charset=utf-8'});
+  const blob=new Blob([''+txt], {type:'text/plain;charset=utf-8'});
   const a=document.createElement('a');
   a.href=URL.createObjectURL(blob);
   a.download=name+'-整体抗浮计算书.txt';
@@ -162,6 +235,63 @@ $('btn-save').addEventListener('click', ()=>{
   setTimeout(()=>URL.revokeObjectURL(a.href),1000);
   $('status').textContent='已下载';
 });
+</script>
+<script>
+// ---------- 登录 / 游客 遮罩层交互 ----------
+function showAuthMask(){ $('auth-mask').classList.remove('hidden'); }
+function hideAuthMask(){ $('auth-mask').classList.add('hidden'); }
+function authMsg(text, ok){ const m=$('auth-msg'); m.textContent=text; m.className='auth-msg '+(text?(ok?'ok':'err'):''); }
+function signupMsg(text, ok){ const m=$('auth-msg2'); m.textContent=text; m.className='auth-msg '+(text?(ok?'ok':'err'):''); }
+function switchTab(t){
+  $('tab-login').classList.toggle('on', t==='login');
+  $('tab-signup').classList.toggle('on', t==='signup');
+  $('pane-login').classList.toggle('hidden', t!=='login');
+  $('pane-signup').classList.toggle('hidden', t!=='signup');
+  authMsg(''); signupMsg('');
+}
+function refreshWho(){
+  const s=KangfuAuth.state();
+  const who=$('who');
+  if(s.guest){ who.innerHTML='<span style="opacity:.85">游客</span><button id="btn-login-open">登录/注册</button>'; }
+  else { who.innerHTML='<span style="opacity:.85">'+((s.user&&s.user.phone)||'已登录')+'</span><button id="btn-logout">退出</button>'; }
+  const b1=$('btn-logout'); if(b1) b1.onclick=()=>KangfuAuth.logout();
+  const b2=$('btn-login-open'); if(b2) b2.onclick=showAuthMask;
+}
+KangfuAuth.onChange(refreshWho);
+
+$('btn-do-login').addEventListener('click', async ()=>{
+  authMsg('登录中…', true);
+  try{ await KangfuAuth.login($('a-phone').value.trim(), $('a-pass').value); hideAuthMask(); }
+  catch(e){ authMsg(e.message); }
+});
+$('btn-do-signup').addEventListener('click', async ()=>{
+  signupMsg('注册中…', true);
+  try{
+    const r=await KangfuAuth.signup($('r-phone').value.trim(), $('r-email').value.trim(), $('r-pass').value);
+    if(r.needConfirm){ switchTab('login'); authMsg('注册成功，请到邮箱确认后登录。', true); }
+    else hideAuthMask();
+  }catch(e){ signupMsg(e.message); }
+});
+// 忘记密码：手机号或邮箱均可，手机号先反查邮箱
+$('btn-forgot').addEventListener('click', async ()=>{
+  const v=$('a-phone').value.trim();
+  authMsg('发送中…', true);
+  try{
+    let email=v;
+    if(/^1\d{10}$/.test(v)){
+      const rows=await KangfuAuth.lookupEmail(v);
+      if(!rows) { authMsg('该手机号未注册。'); return; }
+      email=rows;
+    }
+    await KangfuAuth.recover(email);
+    authMsg('重置邮件已发送，请查收（若邮箱未注册则不会收到）。', true);
+  }catch(e){ authMsg(e.message); }
+});
+$('btn-guest').addEventListener('click', hideAuthMask);
+$('tab-login').addEventListener('click', ()=>switchTab('login'));
+$('tab-signup').addEventListener('click', ()=>switchTab('signup'));
+refreshWho();
+if(KangfuAuth.isGuest()) showAuthMask(); else hideAuthMask();
 </script>
 </body>
 </html>

@@ -22,6 +22,12 @@ namespace 抗浮计算书
             // To customize application configuration such as set high DPI settings or default font,
             // see https://aka.ms/applicationconfiguration.
             ApplicationConfiguration.Initialize();
+
+            using (var login = new LoginForm())
+            {
+                if (login.ShowDialog() != DialogResult.OK) return;   // 取消/关闭窗口则不进入主界面
+            }
+
             System.Windows.Forms.Application.Run(new zhchuangkou());
 
         }

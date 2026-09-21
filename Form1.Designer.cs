@@ -204,12 +204,8 @@
             this.erdingbanbiaogao = new System.Windows.Forms.TextBox();
             this.yidingbanbiaogao = new System.Windows.Forms.TextBox();
             this.sandingbanbiaogao = new System.Windows.Forms.TextBox();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
-            this.dashang = new System.Windows.Forms.Button();
-            this.guanbidashang = new System.Windows.Forms.Button();
             this.label92 = new System.Windows.Forms.Label();
             this.textBox1 = new System.Windows.Forms.TextBox();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // label1
@@ -1807,35 +1803,6 @@
             this.sandingbanbiaogao.Text = "-7.5";
             this.sandingbanbiaogao.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.SignedDecimal_KeyPress);
             // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(194, 202);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(293, 443);
-            this.pictureBox1.TabIndex = 20;
-            this.pictureBox1.TabStop = false;
-            // 
-            // dashang
-            // 
-            this.dashang.Location = new System.Drawing.Point(490, 176);
-            this.dashang.Name = "dashang";
-            this.dashang.Size = new System.Drawing.Size(64, 23);
-            this.dashang.TabIndex = 105;
-            this.dashang.Text = "我要打赏";
-            this.dashang.UseVisualStyleBackColor = true;
-            this.dashang.Click += new System.EventHandler(this.dashang_Click);
-            // 
-            // guanbidashang
-            // 
-            this.guanbidashang.Location = new System.Drawing.Point(263, 606);
-            this.guanbidashang.Name = "guanbidashang";
-            this.guanbidashang.Size = new System.Drawing.Size(149, 23);
-            this.guanbidashang.TabIndex = 0;
-            this.guanbidashang.Text = "已打赏，点击关闭";
-            this.guanbidashang.UseVisualStyleBackColor = true;
-            this.guanbidashang.Click += new System.EventHandler(this.guanbidashang_Click);
-            // 
             // label92
             // 
             this.label92.AutoSize = true;
@@ -1867,11 +1834,8 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.None;
             this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(717, 911);
-            this.Controls.Add(this.guanbidashang);
-            this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.jisuanshu);
             this.Controls.Add(this.textBox1);
-            this.Controls.Add(this.dashang);
             this.Controls.Add(this.label92);
             this.Controls.Add(this.label44);
             this.Controls.Add(this.jielun);
@@ -2049,8 +2013,7 @@
             this.Icon = ((System.Drawing.Icon)(resources.GetObject("$this.Icon")));
             this.Name = "zhchuangkou";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "单建地下室整体抗浮计算软件beta v2.0.8";
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
+            this.Text = "单建地下室整体抗浮计算软件beta v3.0";
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -2232,9 +2195,6 @@
         private TextBox yidingbanbiaogao;
         private Label label91;
         private TextBox sandingbanbiaogao;
-        private PictureBox pictureBox1;
-        private Button dashang;
-        private Button guanbidashang;
         private Label label92;
         private TextBox textBox1;
 

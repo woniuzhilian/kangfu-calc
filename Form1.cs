@@ -11,6 +11,35 @@ namespace 抗浮计算书
         public zhchuangkou()
         {
             InitializeComponent();
+            MakeJisuanshuViewOnly();
+        }
+
+        // 计算书展示框：只读、不可选中、不可复制，仅供查看。
+        private void MakeJisuanshuViewOnly()
+        {
+            jisuanshu.TabStop = false;
+            jisuanshu.ContextMenuStrip = new ContextMenuStrip(); // 空白菜单，去掉右键"复制"
+            jisuanshu.GotFocus += (s, e) => jisuanshu.SelectionLength = 0;
+            jisuanshu.MouseDown += (s, e) => jisuanshu.SelectionLength = 0;
+            jisuanshu.MouseMove += (s, e) => { if (e.Button != MouseButtons.None) jisuanshu.SelectionLength = 0; };
+            jisuanshu.MouseUp += (s, e) => jisuanshu.SelectionLength = 0;
+            jisuanshu.KeyDown += Jisuanshu_KeyDown;
+        }
+
+        private void Jisuanshu_KeyDown(object? sender, KeyEventArgs e)
+        {
+            // 拦截 全选 / 复制 / 剪切 相关组合键
+            bool ctrl = (e.Control || (ModifierKeys & Keys.Control) == Keys.Control);
+            bool shift = (ModifierKeys & Keys.Shift) == Keys.Shift;
+            if (e.KeyCode == Keys.C && ctrl) e.SuppressKeyPress = true;
+            else if (e.KeyCode == Keys.A && ctrl) e.SuppressKeyPress = true;
+            else if (e.KeyCode == Keys.X && ctrl) e.SuppressKeyPress = true;
+            else if (e.KeyCode == Keys.Insert && (ctrl || shift)) e.SuppressKeyPress = true;
+            else if (e.KeyCode == Keys.C && shift) e.SuppressKeyPress = true;
+            else if (shift && (e.KeyCode == Keys.Left || e.KeyCode == Keys.Right ||
+                               e.KeyCode == Keys.Up || e.KeyCode == Keys.Down ||
+                               e.KeyCode == Keys.Home || e.KeyCode == Keys.End)) e.SuppressKeyPress = true;
+            jisuanshu.SelectionLength = 0;
         }
 
         private void cengshu_SelectedIndexChanged(object sender, EventArgs e)
@@ -237,20 +266,13 @@ namespace 抗浮计算书
             this.Close();
         }
 
-        private void dashang_Click(object sender, EventArgs e)
-        {
-            pictureBox1.Visible = true;                                   //点击打赏按钮时，弹出二维码
-            guanbidashang.Visible = true;
-        }
-
-        private void guanbidashang_Click(object sender, EventArgs e)
-        {
-            pictureBox1.Visible = false;
-            guanbidashang.Visible = false;
-        }
-
         private void shengchengjisuanshu_Click(object sender, EventArgs e)
         {
+            if (AppSession.IsGuest)
+            {
+                System.Windows.Forms.MessageBox.Show("游客不能导出计算书，请重新启动并登录后使用。");
+                return;
+            }
             SaveFileDialog saveFileDialog = new SaveFileDialog();
             saveFileDialog.Title = "选择保存文件路径";                                      //对话框标题
             saveFileDialog.Filter = "txt文件（*.txt）|*.txt";  //设置过滤器
