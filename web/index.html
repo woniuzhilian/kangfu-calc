@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>单建地下室整体抗浮计算</title>
+<style>
+  :root { --bd:#d0d7de; --mut:#57606a; --pri:#1f6feb; --bg:#f6f8fa; }
+  * { box-sizing:border-box; }
+  body { font-family:"Microsoft YaHei",system-ui,sans-serif; margin:0; color:#1f2328; background:var(--bg); }
+  header { background:#24292f; color:#fff; padding:12px 20px; font-size:18px; font-weight:600; }
+  .wrap { max-width:1280px; margin:16px auto; padding:0 16px; display:grid; grid-template-columns:minmax(560px,1fr) minmax(480px,1fr); gap:16px; align-items:start; }
+  @media (max-width:960px){ .wrap{ grid-template-columns:1fr; } }
+  fieldset { border:1px solid var(--bd); border-radius:8px; background:#fff; margin:0 0 14px; padding:10px 14px 14px; }
+  legend { font-weight:600; color:var(--mut); padding:0 6px; font-size:14px; }
+  .grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(200px,1fr)); gap:10px 14px; }
+  .fld { display:flex; flex-direction:column; }
+  .fld label { font-size:12px; color:var(--mut); margin-bottom:3px; }
+  .fld input, .fld select { padding:6px 8px; border:1px solid var(--bd); border-radius:6px; font-size:14px; width:100%; }
+  .fld input:focus, .fld select:focus { outline:2px solid #a8c7ff; border-color:var(--pri); }
+  .bar { position:sticky; bottom:0; display:flex; gap:10px; align-items:center; padding:12px 14px; background:#fff; border:1px solid var(--bd); border-radius:8px; }
+  button { padding:8px 18px; border:1px solid var(--bd); border-radius:6px; background:#f6f8fa; font-size:14px; cursor:pointer; }
+  button.primary { background:var(--pri); color:#fff; border-color:var(--pri); }
+  button:hover { filter:brightness(.96); }
+  .side { position:sticky; top:12px; }
+  .kv { display:flex; gap:24px; align-items:center; background:#fff; border:1px solid var(--bd); border-radius:8px; padding:12px 16px; margin-bottom:12px; }
+  .kv .val { font-size:22px; font-weight:700; }
+  .pass { color:#1a7f37; } .fail { color:#cf222e; }
+  #jisuanshu { width:100%; height:calc(100vh - 180px); min-height:360px; font-family:Consolas,"Courier New",monospace; font-size:13px; line-height:1.6; padding:14px; border:1px solid var(--bd); border-radius:8px; background:#fff; resize:vertical; }
+  .hidden { display:none; }
+</style>
+</head>
+<body>
+<header>单建地下室整体抗浮计算　<span style="font-size:13px;font-weight:400;opacity:.8">（网页版 · 与桌面版同一算法）</span></header>
+<div class="wrap">
+  <div>
+    <fieldset><legend>工程信息</legend>
+      <div class="grid">
+        <div class="fld"><label>工程名称</label><input id="gongchengmingcheng" type="text" placeholder="必填"></div>
+        <div class="fld"><label>验算区域</label><input id="quyu" type="text" placeholder="如 A~C轴"></div>
+        <div class="fld"><label>地下室层数</label><select id="cengshu"><option value="">请选择</option><option>1层</option><option>2层</option><option>3层</option></select></div>
+        <div class="fld"><label>抗浮设计等级</label><select id="kangfudengji"><option value="">请选择</option><option>甲级</option><option>乙级</option><option>丙级</option></select></div>
+        <div class="fld"><label>验算区域x向长度(m)</label><input id="quyux" type="text" inputmode="decimal"></div>
+        <div class="fld"><label>验算区域y向长度(m)</label><input id="quyuy" type="text" inputmode="decimal"></div>
+      </div>
+    </fieldset>
+    <fieldset><legend>整体参数</legend><div class="grid" id="g-OVERALL"></div></fieldset>
+    <fieldset><legend>基础</legend><div class="grid" id="g-FOUND"></div></fieldset>
+    <fieldset><legend>-1层构件</legend><div class="grid" id="g-F1"></div></fieldset>
+    <fieldset id="s-F2" class="hidden"><legend>-2层构件</legend><div class="grid" id="g-F2"></div></fieldset>
+    <fieldset id="s-F3" class="hidden"><legend>-3层构件</legend><div class="grid" id="g-F3"></div></fieldset>
+    <div class="bar">
+      <button class="primary" id="btn-calc">计算</button>
+      <button id="btn-clear">清除</button>
+      <button id="btn-save">保存计算书(.txt)</button>
+      <span id="status" style="color:var(--mut);font-size:13px;margin-left:auto"></span>
+    </div>
+  </div>
+  <div class="side">
+    <div class="kv"><span>抗浮稳定安全系数：<span class="val" id="bizhi"></span></span><span id="jielun"></span></div>
+    <textarea id="jisuanshu" readonly placeholder="计算结果与计算书将显示在此处"></textarea>
+  </div>
+</div>
+
+<script src="kangfu.js"></script>
+<script>
+const $ = id=>document.getElementById(id);
+const ALL_FIELDS = [...OVERALL, ...FOUND, ...F1, ...F2, ...F3];
+
+function unitOf(f){
+  if(f.name.includes('容重')) return '(kN/m³)';
+  if(/标高|厚|宽|长度/.test(f.name)) return '(m)';
+  return '';
+}
+function buildGrid(elId, list){
+  $(elId).innerHTML = list.map(f=>
+    `<div class="fld"><label>${f.name}${unitOf(f)}</label>`+
+    `<input id="${f.id}" type="text" inputmode="${/shu$|shuliang/.test(f.id)?'numeric':'decimal'}" autocomplete="off"></div>`
+  ).join('');
+}
+buildGrid('g-OVERALL', OVERALL);
+buildGrid('g-FOUND', FOUND);
+buildGrid('g-F1', F1);
+buildGrid('g-F2', F2);
+buildGrid('g-F3', F3);
+
+function updateFloorVisibility(){
+  const cs=$('cengshu').value;
+  $('s-F2').classList.toggle('hidden', !(cs==='2层'||cs==='3层'));
+  $('s-F3').classList.toggle('hidden', !(cs==='3层'));
+}
+$('cengshu').addEventListener('change', updateFloorVisibility);
+
+function showResult(bizhi, jielun, jss){
+  $('bizhi').textContent = bizhi;
+  const jr=$('jielun');
+  jr.textContent = jielun;
+  jr.className = jielun.includes('满足抗浮要求') ? 'pass' : (jielun ? 'fail' : '');
+  $('jisuanshu').value = jss;
+}
+function clearResult(){ $('bizhi').textContent=''; $('jielun').textContent=''; $('jielun').className=''; $('jisuanshu').value=''; }
+
+$('btn-calc').addEventListener('click', ()=>{
+  const raw={}; ALL_FIELDS.forEach(f=>raw[f.id]=$(f.id).value);
+  raw.quyux=$('quyux').value; raw.quyuy=$('quyuy').value;
+  const r = runFromRaw(raw, $('cengshu').value, $('kangfudengji').value,
+                          $('gongchengmingcheng').value, $('quyu').value);
+  if(r.alert){ clearResult(); $('status').textContent=''; alert(r.alert); return; }
+  showResult(r.bizhi, r.jielun, r.jss);
+  $('status').textContent='计算完成';
+});
+
+$('btn-clear').addEventListener('click', ()=>{
+  ALL_FIELDS.forEach(f=>$(f.id).value='');
+  $('gongchengmingcheng').value=''; $('quyu').value='';
+  $('quyux').value=''; $('quyuy').value='';
+  $('cengshu').value=''; $('kangfudengji').value='';
+  updateFloorVisibility(); clearResult(); $('status').textContent='';
+});
+
+$('btn-save').addEventListener('click', ()=>{
+  const txt=$('jisuanshu').value;
+  if(!txt){ alert('请先计算，暂无可保存的内容！'); return; }
+  const name=$('gongchengmingcheng').value.trim()||'抗浮计算书';
+  const blob=new Blob(['\ufeff'+txt], {type:'text/plain;charset=utf-8'});
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(blob);
+  a.download=name+'-整体抗浮计算书.txt';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(()=>URL.revokeObjectURL(a.href),1000);
+  $('status').textContent='已下载';
+});
+</script>
+</body>
+</html>
