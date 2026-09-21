@@ -1,0 +1,8 @@
+bin/
+obj/
+.vs/
+*.user
+*.bak
+*.bak5
+*.bak7
+*.bak9

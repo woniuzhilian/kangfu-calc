@@ -1,0 +1,9 @@
+﻿namespace Org
+{
+    internal class BouncyCastle
+    {
+        internal class Bcpg
+        {
+        }
+    }
+}
