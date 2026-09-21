@@ -84,6 +84,38 @@ buildGrid('g-F1', F1);
 buildGrid('g-F2', F2);
 buildGrid('g-F3', F3);
 
+// 默认值与桌面版 Form1.Designer.cs 逐项一致（清除后变空白，与桌面版"清除"行为相同）
+const DEFAULTS = {
+  gongchengmingcheng:'请在此处输入工程名称(只影响计算书内容，不影响计算结果)',
+  quyu:'如：1轴-2轴交A轴-B轴',
+  quyux:'8.1', quyuy:'8.1',
+  shuiwei:'-2.0', dibandibiaogao:'-10.0', tongrongzhong:'25',
+  yidingbanbiaogao:'-1.5', erdingbanbiaogao:'-4.5', sandingbanbiaogao:'-7.5',
+  fuyidingbanhou:'0.25', fuerdingbanhou:'0.25', fusandingbanhou:'0.25',
+  dibanhoudu:'0.4',
+  fuyidingbanfutuhou:'1.5', fuerdingbanfutuhou:'0.05', fusandingbanfutuhou:'0.05',
+  dibanfutuhou:'0.05',
+  fuyidingbanfuturongzhong:'20', fuerdingbanfuturongzhong:'22', fusandingbanfuturongzhong:'22',
+  dibanfuturongzhong:'22',
+  jichuhou:'1', jichuchang:'3', jichukuan:'3', jichushuliang:'1',
+  fuyixzhuliangkuan:'0.4', fuyixzhulianggao:'0.9', fuyixzhuliangshu:'1',
+  fuyiyzhuliangkuan:'0.4', fuyiyzhulianggao:'0.9', fuyiyzhuliangshu:'1',
+  fuyixciliangkuan:'0.3', fuyixcilianggao:'0.8', fuyixciliangshu:'2',
+  fuyiyciliangkuan:'0.3', fuyiycilianggao:'0.8', fuyiyciliangshu:'2',
+  fuyizhuchang:'0.6', fuyizhukuan:'0.6', fuyizhushu:'1',
+  fuerxzhuliangkuan:'0.4', fuerxzhulianggao:'0.9', fuerxzhuliangshu:'1',
+  fueryzhuliangkuan:'0.4', fueryzhulianggao:'0.9', fueryzhuliangshu:'1',
+  fuerxciliangkuan:'0.3', fuerxcilianggao:'0.8', fuerxciliangshu:'2',
+  fueryciliangkuan:'0.3', fuerycilianggao:'0.8', fueryciliangshu:'2',
+  fuerzhuchang:'0.6', fuerzhukuan:'0.6', fuerzhushu:'1',
+  fusanxzhuliangkuan:'0.4', fusanxzhulianggao:'0.9', fusanxzhuliangshu:'1',
+  fusanyzhuliangkuan:'0.4', fusanyzhulianggao:'0.9', fusanyzhuliangshu:'1',
+  fusanxciliangkuan:'0.3', fusanxcilianggao:'0.8', fusanxciliangshu:'2',
+  fusanyciliangkuan:'0.3', fusanycilianggao:'0.8', fusanyciliangshu:'2',
+  fusanzhuchang:'0.6', fusanzhukuan:'0.6', fusanzhushu:'1'
+};
+for(const k in DEFAULTS){ const el=$(k); if(el) el.value=DEFAULTS[k]; }
+
 function updateFloorVisibility(){
   const cs=$('cengshu').value;
   $('s-F2').classList.toggle('hidden', !(cs==='2层'||cs==='3层'));
