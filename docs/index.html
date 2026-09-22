@@ -95,16 +95,18 @@
     <div id="pane-login">
       <div class="row"><label>手机号</label><input id="a-phone" type="text" inputmode="numeric" maxlength="11" placeholder="注册时填写的手机号"></div>
       <div class="row"><label>密码</label><input id="a-pass" type="password" placeholder="登录密码"></div>
+      <div class="row hidden" id="row-forgot-email"><label>绑定邮箱（用于找回密码）</label><input id="a-forgot-email" type="text" inputmode="email" placeholder="注册时预留的邮箱"></div>
       <div class="auth-msg" id="auth-msg"></div>
       <div class="auth-actions">
         <button class="pri" id="btn-do-login">登 录</button>
-        <button class="lnk" id="btn-forgot">忘记密码？（向手机号/邮箱发送重置邮件）</button>
+        <button class="lnk" id="btn-forgot">忘记密码</button>
       </div>
     </div>
     <div id="pane-signup" class="hidden">
       <div class="row"><label>手机号（作为登录用户名）</label><input id="r-phone" type="text" inputmode="numeric" maxlength="11"></div>
       <div class="row"><label>邮箱（用于找回密码）</label><input id="r-email" type="text" inputmode="email"></div>
       <div class="row"><label>设置密码（至少 6 位）</label><input id="r-pass" type="password"></div>
+      <div class="row"><label>确认密码</label><input id="r-pass2" type="password"></div>
       <div class="auth-msg" id="auth-msg2"></div>
       <div class="auth-actions">
         <button class="pri" id="btn-do-signup">注 册</button>
@@ -175,7 +177,18 @@ function updateFloorVisibility(){
   $('s-F2').classList.toggle('hidden', !(cs==='2层'||cs==='3层'));
   $('s-F3').classList.toggle('hidden', !(cs==='3层'));
 }
-$('cengshu').addEventListener('change', updateFloorVisibility);
+let lastCengVal='';
+$('cengshu').addEventListener('change', ()=>{
+  const cs=$('cengshu').value;
+  if(window.KangfuAuth && KangfuAuth.isGuest() && (cs==='2层'||cs==='3层')){
+    alert('游客不能计算2层、3层地下室，请先登录或注册。');
+    $('cengshu').value=lastCengVal;
+    updateFloorVisibility();
+    return;
+  }
+  lastCengVal=cs;
+  updateFloorVisibility();
+});
 
 // 计算书展示框：只读、不可选中、不可复制，仅供查看。
 (function guardJisuanshu(){
@@ -248,6 +261,15 @@ function switchTab(t){
   $('pane-login').classList.toggle('hidden', t!=='login');
   $('pane-signup').classList.toggle('hidden', t!=='signup');
   authMsg(''); signupMsg('');
+  if(t==='login') resetForgot();
+}
+const PHONE_RE=/^1\d{10}$/, EMAIL_RE=/^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+let forgotMode=false;
+function resetForgot(){
+  forgotMode=false;
+  const row=$('row-forgot-email'); if(row) row.classList.add('hidden');
+  const em=$('a-forgot-email'); if(em) em.value='';
+  const btn=$('btn-forgot'); if(btn) btn.textContent='忘记密码';
 }
 function refreshWho(){
   const s=KangfuAuth.state();
@@ -265,26 +287,42 @@ $('btn-do-login').addEventListener('click', async ()=>{
   catch(e){ authMsg(e.message); }
 });
 $('btn-do-signup').addEventListener('click', async ()=>{
+  const phone=$('r-phone').value.trim(), email=$('r-email').value.trim();
+  const p1=$('r-pass').value, p2=$('r-pass2').value;
+  if(!PHONE_RE.test(phone)){ signupMsg('请输入 11 位手机号。'); return; }
+  if(!EMAIL_RE.test(email)){ signupMsg('请输入正确的邮箱。'); return; }
+  if(p1.length<6){ signupMsg('密码至少 6 位。'); return; }
+  if(p1!==p2){ signupMsg('两次输入的密码不一致。'); return; }
   signupMsg('注册中…', true);
   try{
-    const r=await KangfuAuth.signup($('r-phone').value.trim(), $('r-email').value.trim(), $('r-pass').value);
+    const r=await KangfuAuth.signup(phone, email, p1);
     if(r.needConfirm){ switchTab('login'); authMsg('注册成功，请到邮箱确认后登录。', true); }
     else hideAuthMask();
   }catch(e){ signupMsg(e.message); }
 });
-// 忘记密码：手机号或邮箱均可，手机号先反查邮箱
+// 忘记密码：两步——先校验手机号并显示邮箱框，再校验绑定邮箱一致后发送
 $('btn-forgot').addEventListener('click', async ()=>{
-  const v=$('a-phone').value.trim();
-  authMsg('发送中…', true);
+  if(!forgotMode){
+    const phone=$('a-phone').value.trim();
+    if(!PHONE_RE.test(phone)){ authMsg('请先在手机号栏输入已注册的手机号。'); return; }
+    forgotMode=true;
+    $('row-forgot-email').classList.remove('hidden');
+    $('btn-forgot').textContent='发送重置邮件';
+    authMsg('请输入注册时绑定的邮箱，然后点击"发送重置邮件"。', true);
+    $('a-forgot-email').focus();
+    return;
+  }
+  const phone=$('a-phone').value.trim();
+  const email=$('a-forgot-email').value.trim();
+  if(!EMAIL_RE.test(email)){ authMsg('请输入正确的邮箱。'); return; }
+  authMsg('校验并发送中…', true);
   try{
-    let email=v;
-    if(/^1\d{10}$/.test(v)){
-      const rows=await KangfuAuth.lookupEmail(v);
-      if(!rows) { authMsg('该手机号未注册。'); return; }
-      email=rows;
-    }
-    await KangfuAuth.recover(email);
-    authMsg('重置邮件已发送，请查收（若邮箱未注册则不会收到）。', true);
+    const bound=await KangfuAuth.lookupEmail(phone);
+    if(!bound){ authMsg('该手机号未注册。'); return; }
+    if(String(bound).trim().toLowerCase()!==email.toLowerCase()){ authMsg('邮箱与该手机号绑定的不一致，无法发送重置邮件。'); return; }
+    await KangfuAuth.recover(bound);
+    resetForgot();
+    authMsg('重置邮件已发送，请查收。', true);
   }catch(e){ authMsg(e.message); }
 });
 $('btn-guest').addEventListener('click', hideAuthMask);
