@@ -42,8 +42,18 @@ namespace 抗浮计算书
             jisuanshu.SelectionLength = 0;
         }
 
+        private int _lastCengIndex = -1;
+
         private void cengshu_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (AppSession.IsGuest && (cengshu.Text == "2层" || cengshu.Text == "3层"))
+            {
+                System.Windows.Forms.MessageBox.Show("游客不能计算2层、3层地下室，请重新启动并登录后使用。");
+                cengshu.SelectedIndex = _lastCengIndex;   // 回退到上一次有效选择
+                return;
+            }
+            _lastCengIndex = cengshu.SelectedIndex;
+
             string cs = cengshu.Text;
             switch (cs)
             {
